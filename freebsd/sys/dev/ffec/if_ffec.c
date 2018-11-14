@@ -415,6 +415,8 @@ ffec_miibus_statchg(device_t dev)
 	struct ffec_softc *sc;
 	struct mii_data *mii;
 	uint32_t ecr, rcr, tcr;
+	u_int mii_media_active;
+	u_int mii_media_status;
 
 	/*
 	 * Called by the MII bus driver when the PHY establishes link to set the
@@ -426,8 +428,15 @@ ffec_miibus_statchg(device_t dev)
 	FFEC_ASSERT_LOCKED(sc);
 
 	mii = sc->mii_softc;
+	if (mii != NULL) {
+		mii_media_status = mii->mii_media_status;
+		mii_media_active = mii->mii_media_active;
+	} else {
+		mii_media_status = IFM_ACTIVE;
+		mii_media_active = IFM_100_TX | IFM_FDX;
+	}
 
-	if (mii->mii_media_status & IFM_ACTIVE)
+	if (mii_media_status & IFM_ACTIVE)
 		sc->link_is_up = true;
 	else
 		sc->link_is_up = false;
@@ -452,7 +461,7 @@ ffec_miibus_statchg(device_t dev)
 		break;
 	}
 
-	switch (IFM_SUBTYPE(mii->mii_media_active)) {
+	switch (IFM_SUBTYPE(mii_media_active)) {
 	case IFM_1000_T:
 	case IFM_1000_SX:
 		ecr |= FEC_ECR_SPEED;
@@ -469,16 +478,16 @@ ffec_miibus_statchg(device_t dev)
 	default:
 		sc->link_is_up = false;
 		device_printf(dev, "Unsupported media %u\n",
-		    IFM_SUBTYPE(mii->mii_media_active));
+		    IFM_SUBTYPE(mii_media_active));
 		return;
 	}
 
-	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0)
+	if ((IFM_OPTIONS(mii_media_active) & IFM_FDX) != 0)
 		tcr |= FEC_TCR_FDEN;
 	else
 		rcr |= FEC_RCR_DRT;
 
-	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FLOW) != 0)
+	if ((IFM_OPTIONS(mii_media_active) & IFM_FLOW) != 0)
 		rcr |= FEC_RCR_FCE;
 
 	WR4(sc, FEC_RCR_REG, rcr);
@@ -495,6 +504,8 @@ ffec_media_status(struct ifnet * ifp, struct ifmediareq *ifmr)
 
 	sc = ifp->if_softc;
 	mii = sc->mii_softc;
+	if (mii == NULL)
+		return;
 	FFEC_LOCK(sc);
 	mii_pollstat(mii);
 	ifmr->ifm_active = mii->mii_media_active;
@@ -627,7 +638,8 @@ ffec_tick(void *arg)
 
 	/* Check the media status. */
 	link_was_up = sc->link_is_up;
-	mii_tick(sc->mii_softc);
+	if (sc->mii_softc != NULL)
+		mii_tick(sc->mii_softc);
 	if (sc->link_is_up && !link_was_up)
 		ffec_txstart_locked(sc);
 
@@ -1362,7 +1374,10 @@ ffec_init_locked(struct ffec_softc *sc)
 	* Call mii_mediachg() which will call back into ffec_miibus_statchg() to
 	* set up the remaining config registers based on the current media.
 	*/
-	mii_mediachg(sc->mii_softc);
+	if (sc->mii_softc != NULL)
+		mii_mediachg(sc->mii_softc);
+	else
+		ffec_miibus_statchg(sc->dev);
 	callout_reset(&sc->ffec_callout, hz, ffec_tick, sc);
 
 	/*
@@ -1471,7 +1486,9 @@ ffec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		mii = sc->mii_softc;
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
+		if (mii != NULL) {
+			error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
+		}
 		break;
 
 	case SIOCSIFCAP:
@@ -1760,6 +1777,14 @@ ffec_attach(device_t dev)
 		error = ENXIO;
 		goto out;
 	}
+	{
+  int len;
+  const uint32_t *val;
+  val = fdt_getprop(bsp_fdt_get(), ofw_bus_get_node(dev), "pinctrl-0", &len);
+  if (len == 4) {
+    imx_iomux_configure_pins(bsp_fdt_get(), fdt32_to_cpu(val[0]));
+  }
+	}
 	sc->phy_conn_type = mii_fdt_get_contype(ofw_node);
 	if (sc->phy_conn_type == MII_CONTYPE_UNKNOWN) {
 		device_printf(sc->dev, "No valid 'phy-mode' "
@@ -2036,11 +2061,11 @@ ffec_attach(device_t dev)
 	error = mii_attach(dev, &sc->miibus, ifp, ffec_media_change,
 	    ffec_media_status, BMSR_DEFCAPMASK, phynum, MII_OFFSET_ANY,
 	    (sc->fecflags & FECTYPE_MVF) ? MIIF_FORCEANEG : 0);
-	if (error != 0) {
+	if (error == 0) {
+		sc->mii_softc = device_get_softc(sc->miibus);
+	} else {
 		device_printf(dev, "PHY attach failed\n");
-		goto out;
 	}
-	sc->mii_softc = device_get_softc(sc->miibus);
 
 	/* All ready to run, attach the ethernet interface. */
 	ether_ifattach(ifp, eaddr);
