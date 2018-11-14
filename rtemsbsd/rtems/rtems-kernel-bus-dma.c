@@ -396,6 +396,9 @@ bus_dmamap_sync(bus_dma_tag_t dmat, bus_dmamap_t map, bus_dmasync_op_t op)
 	uintptr_t size = map->buffer_size;
 	uintptr_t begin = (uintptr_t) map->buffer_begin;
 	uintptr_t end = begin + size;
+	if (begin >= 0x80100000 && end <= 0x80200000) {
+		return;
+	}
 
 	if ((op & BUS_DMASYNC_PREWRITE) != 0 && (op & BUS_DMASYNC_PREREAD) == 0) {
 		rtems_cache_flush_multiple_data_lines((void *) begin, size);
