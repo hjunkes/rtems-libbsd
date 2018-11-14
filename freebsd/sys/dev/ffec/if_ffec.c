@@ -428,7 +428,7 @@ ffec_miibus_statchg(device_t dev)
 	FFEC_ASSERT_LOCKED(sc);
 
 	mii = sc->mii_softc;
-	if (mii != NULL) {
+	if (mii != NULL && 0) {
 		mii_media_status = mii->mii_media_status;
 		mii_media_active = mii->mii_media_active;
 	} else {
@@ -508,8 +508,8 @@ ffec_media_status(struct ifnet * ifp, struct ifmediareq *ifmr)
 		return;
 	FFEC_LOCK(sc);
 	mii_pollstat(mii);
-	ifmr->ifm_active = mii->mii_media_active;
-	ifmr->ifm_status = mii->mii_media_status;
+	ifmr->ifm_active = IFM_ACTIVE;
+	ifmr->ifm_status = IFM_100_TX | IFM_FDX;
 	FFEC_UNLOCK(sc);
 }
 
@@ -1486,8 +1486,10 @@ ffec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		mii = sc->mii_softc;
-		if (mii != NULL) {
+		if (mii != NULL && 0) {
 			error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
+		} else {
+			error = ENXIO;
 		}
 		break;
 
@@ -1778,11 +1780,9 @@ ffec_attach(device_t dev)
 		goto out;
 	}
 	{
-  int len;
-  const uint32_t *val;
-  val = fdt_getprop(bsp_fdt_get(), ofw_bus_get_node(dev), "pinctrl-0", &len);
-  if (len == 4) {
-    imx_iomux_configure_pins(bsp_fdt_get(), fdt32_to_cpu(val[0]));
+  uint32_t val;
+  if (OF_getprop(ofw_bus_get_node(dev), "pinctrl-0", &val, sizeof(val)) == 4) {
+    imx_iomux_configure_pins(bsp_fdt_get(), fdt32_to_cpu(val));
   }
 	}
 	sc->phy_conn_type = mii_fdt_get_contype(ofw_node);
