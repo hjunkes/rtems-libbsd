@@ -438,7 +438,7 @@ imx_ehci_attach(device_t dev)
 	}
 
 	/* Turn on clocks. */
-	imx_ccm_usb_enable(dev);
+	//imx_ccm_usb_enable(dev);
 
 	/* Disable overcurrent detection, if configured to do so. */
 	if (OF_hasprop(ofw_bus_get_node(sc->dev), "disable-over-current"))

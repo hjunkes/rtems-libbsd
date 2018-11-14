@@ -166,6 +166,40 @@ usb_pc_buffer_is_aligned(struct usb_page_cache *pc, usb_frlength_t offset,
 	return (1);
 }
 
+
+static void atsam_do_copy(
+  uint8_t *dst,
+  const uint8_t *src,
+  size_t n,
+  bool aligned
+)
+{
+  if (aligned) {
+    while (n > 3) {
+      *(uint32_t *)dst = *(uint32_t *)src;
+      dst += 4;
+      src += 4;
+      n -= 4;
+    }
+  }
+
+  while (n > 0) {
+    *dst = *src;
+    ++dst;
+    ++src;
+    --n;
+  }
+}
+
+void atsam_copy_to_io(void *dst, const void *src, size_t n)
+{
+  atsam_do_copy(dst, src, n, ((uintptr_t)dst) % 4 == 0);
+}
+
+void atsam_copy_from_io(void *dst, const void *src, size_t n)
+{
+  atsam_do_copy(dst, src, n, ((uintptr_t)src) % 4 == 0);
+}
 /*------------------------------------------------------------------------*
  *  usbd_copy_in - copy directly to DMA-able memory
  *------------------------------------------------------------------------*/
@@ -182,7 +216,7 @@ usbd_copy_in(struct usb_page_cache *cache, usb_frlength_t offset,
 		if (buf_res.length > len) {
 			buf_res.length = len;
 		}
-		memcpy(buf_res.buffer, ptr, buf_res.length);
+		atsam_copy_to_io(buf_res.buffer, ptr, buf_res.length);
 
 		offset += buf_res.length;
 		len -= buf_res.length;
@@ -302,7 +336,7 @@ usbd_copy_out(struct usb_page_cache *cache, usb_frlength_t offset,
 		if (res.length > len) {
 			res.length = len;
 		}
-		memcpy(ptr, res.buffer, res.length);
+		atsam_copy_from_io(ptr, res.buffer, res.length);
 
 		offset += res.length;
 		len -= res.length;

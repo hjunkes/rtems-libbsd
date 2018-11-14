@@ -4948,6 +4948,8 @@ class imx(builder.Module):
         mm = self.manager
         self.addKernelSpaceHeaderFiles(
             [
+                'sys/arm/freescale/imx/imx6_anatopreg.h',
+                'sys/arm/freescale/imx/imx6_anatopvar.h',
                 'sys/arm/freescale/imx/imx6_ccmreg.h',
                 'sys/arm/freescale/imx/imx6_machdep.h',
                 'sys/arm/freescale/imx/imx_machdep.h',
@@ -4956,6 +4958,7 @@ class imx(builder.Module):
         self.addKernelSpaceSourceFiles(
             [
                 'sys/arm/freescale/imx/imx6_ccm.c',
+                'sys/arm/freescale/imx/imx6_usbphy.c',
                 'sys/dev/usb/controller/ehci_imx.c',
             ],
             mm.generator['source']()
