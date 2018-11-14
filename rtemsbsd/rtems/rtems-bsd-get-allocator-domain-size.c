@@ -47,7 +47,7 @@ rtems_bsd_get_allocator_domain_size(rtems_bsd_allocator_domain domain)
 	switch (domain) {
 		case RTEMS_BSD_ALLOCATOR_DOMAIN_PAGE:
 		case RTEMS_BSD_ALLOCATOR_DOMAIN_MBUF:
-			size = rtems_bsd_allocator_domain_page_mbuf_size;
+			size = 64 * 1024 * 1024;
 			break;
 		default:
 			size = 0;
