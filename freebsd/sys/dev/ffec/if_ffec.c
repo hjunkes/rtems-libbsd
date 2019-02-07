@@ -638,8 +638,10 @@ ffec_tick(void *arg)
 
 	/* Check the media status. */
 	link_was_up = sc->link_is_up;
+#if 0
 	if (sc->mii_softc != NULL)
 		mii_tick(sc->mii_softc);
+#endif
 	if (sc->link_is_up && !link_was_up)
 		ffec_txstart_locked(sc);
 
