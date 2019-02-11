@@ -303,6 +303,16 @@ imx_ehci_probe(device_t dev)
 		return (ENXIO);
 
 	if (ofw_bus_search_compatible(dev, compat_data)->ocd_data != 0) {
+#ifdef __rtems__
+		char dr_mode[24];
+
+		if (OF_getprop(ofw_bus_get_node(dev), "dr_mode",
+		    &dr_mode, sizeof(dr_mode)) > 0 &&
+		    strcasecmp(dr_mode, "host") != 0) {
+			return (ENXIO);
+		}
+#endif /* __rtems__ */
+
 		device_set_desc(dev, "Freescale i.MX integrated USB controller");
 		return (BUS_PROBE_DEFAULT);
 	}
