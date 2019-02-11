@@ -144,8 +144,8 @@ SYSINIT_MODULE_REFERENCE(wlan_ccmp);
 SYSINIT_REFERENCE(rtwn_rtl8188eufw);
 #endif /* RTEMS_BSD_MODULE_NET80211 */
 
-SYSINIT_DRIVER_REFERENCE(ffec, simplebus);
-SYSINIT_DRIVER_REFERENCE(ksz8091rnb, miibus);
+//SYSINIT_DRIVER_REFERENCE(ffec, simplebus);
+//SYSINIT_DRIVER_REFERENCE(ksz8091rnb, miibus);
 
 //SYSINIT_DRIVER_REFERENCE(imx51_gpio, simplebus);
 //SYSINIT_DRIVER_REFERENCE(sdhci_fsl, simplebus);
