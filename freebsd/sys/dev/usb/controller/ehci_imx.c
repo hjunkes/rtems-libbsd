@@ -380,6 +380,25 @@ imx_ehci_disable_oc(struct imx_ehci_softc *sc)
 	index = usbmprops[1];
 	imx_usbmisc_set_ctrl(usbmdev, index, USBNC_OVER_CUR_DIS);
 }
+#ifdef __rtems__
+static uint16_t
+imx_ehci_get_port_speed_portsc(struct ehci_softc *sc, uint16_t index)
+{
+	uint32_t v;
+
+	v = ehci_get_port_speed_portsc(sc, index);
+
+	/* FIXME: Set/clear ENHOSTDISCONNECT in USBPHY CTRL register */
+	volatile uint32_t *ctrl = (volatile uint32_t *)0x20CA030;
+	if (v == UPS_HIGH_SPEED) {
+		*ctrl = *ctrl | 0x2;
+	} else {
+		*ctrl = *ctrl & ~(0x2u);
+	}
+
+	return (v);
+}
+#endif /* __rtems__ */
 
 static int
 imx_ehci_attach(device_t dev)
@@ -471,7 +490,11 @@ imx_ehci_attach(device_t dev)
 	 */
 	esc->sc_flags |= EHCI_SCFLG_NORESTERM | EHCI_SCFLG_TT;
 	esc->sc_vendor_post_reset = imx_ehci_post_reset;
+#ifndef __rtems__
 	esc->sc_vendor_get_port_speed = ehci_get_port_speed_portsc;
+#else /* __rtems__ */
+	esc->sc_vendor_get_port_speed = imx_ehci_get_port_speed_portsc;
+#endif /* __rtems__ */
 
 	err = ehci_init(esc);
 	if (err != 0) {
