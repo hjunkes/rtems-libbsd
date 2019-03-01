@@ -766,7 +766,7 @@ sdhci_dma_alloc(struct sdhci_slot *slot)
 		else
 			slot->sdma_boundary = SDHCI_BLKSZ_SDMA_BNDRY_512K;
 	}
-	slot->sdma_bbufsz = SDHCI_SDMA_BNDRY_TO_BBUFSZ(slot->sdma_boundary);
+	slot->sdma_bbufsz = 2048;//SDHCI_SDMA_BNDRY_TO_BBUFSZ(slot->sdma_boundary);
 
 	/*
 	 * Allocate the DMA tag for an SDMA bounce buffer.
@@ -1895,7 +1895,7 @@ sdhci_start_data(struct sdhci_slot *slot, const struct mmc_data *data)
 		 * Interrupt aggregation: Mask border interrupt for the last
 		 * bounce buffer and unmask otherwise.
 		 */
-		if (data->len == sdma_bbufsz)
+		if (data->len <= sdma_bbufsz)
 			slot->intmask &= ~SDHCI_INT_DMA_END;
 		else
 			slot->intmask |= SDHCI_INT_DMA_END;
@@ -2180,7 +2180,7 @@ sdhci_data_irq(struct sdhci_slot *slot, uint32_t intmask)
 			sdhci_transfer_pio(slot);
 	}
 	/* Handle DMA border. */
-	if (intmask & SDHCI_INT_DMA_END) {
+	if (intmask & (slot->intmask & SDHCI_INT_DMA_END)) {
 		data = slot->curcmd->data;
 		sdma_bbufsz = slot->sdma_bbufsz;
 

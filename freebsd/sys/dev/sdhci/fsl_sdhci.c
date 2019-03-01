@@ -887,7 +887,8 @@ fsl_sdhci_attach(device_t dev)
 	/*
 	 * DMA is not really broken, I just haven't implemented it yet.
 	 */
-	sc->slot.quirks |= SDHCI_QUIRK_BROKEN_DMA;
+	sc->slot.quirks |= SDHCI_QUIRK_32BIT_DMA_SIZE;
+	sc->slot.quirks |= SDHCI_QUIRK_BROKEN_SDMA_BOUNDARY;
 
 	/*
 	 * Set the buffer watermark level to 128 words (512 bytes) for both read
