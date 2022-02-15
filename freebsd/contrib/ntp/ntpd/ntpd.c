@@ -140,6 +140,7 @@
 # include <seccomp.h>
 #endif /* LIBSECCOMP and KERN_SECCOMP */
 
+#ifndef __rtems__
 #ifdef __FreeBSD__
 #include <sys/procctl.h>
 #ifndef PROC_STACKGAP_CTL
@@ -150,6 +151,9 @@
 #define	PROC_STACKGAP_DISABLE	0x0002
 #endif
 #endif
+#else /* __rtems__ */
+#include <rtems/ntpd.h>
+#endif /* __rtems__ */
 
 #ifdef HAVE_DNSREGISTRATION
 # include <dns_sd.h>
@@ -255,6 +259,9 @@ char **	saved_argv;
 #endif
 
 #ifndef SIM
+#ifdef __rtems__
+static
+#endif /* __rtems__ */
 int		ntpdmain		(int, char **);
 static void	set_process_priority	(void);
 static void	assertion_failed	(const char *, int,
@@ -388,6 +395,7 @@ parse_cmdline_opts(
 }
 
 
+#ifndef __rtems__
 #ifdef SIM
 int
 main(
@@ -432,6 +440,7 @@ main(
 #endif /* !SYS_WINNT */
 #endif /* !NO_MAIN_ALLOWED */
 #endif /* !SIM */
+#endif /* __rtems__ */
 
 #ifdef _AIX
 /*
@@ -1090,7 +1099,9 @@ ntpdmain(
 	init_util();
 	init_restrict();
 	init_mon();
+#ifndef __rtems__
 	init_timer();
+#endif /* __rtems__ */
 	init_request();
 	init_control();
 	init_peer();
@@ -1527,6 +1538,14 @@ int scmp_sc[] = {
 	UNBLOCK_IO_AND_ALARM();
 	return 1;
 }
+#ifdef __rtems__
+int
+rtems_ntpd_run(int argc, char **argv)
+{
+
+	return (rtems_bsd_program_call_main("ntpd", ntpdmain, argc, argv));
+}
+#endif /* __rtems__ */
 #endif	/* !SIM */
 
 

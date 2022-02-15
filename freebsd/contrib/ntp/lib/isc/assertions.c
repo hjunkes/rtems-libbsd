@@ -107,20 +107,25 @@ static void
 default_callback(const char *file, int line, isc_assertiontype_t type,
 		 const char *cond)
 {
+#ifndef __rtems__
 	void *tracebuf[BACKTRACE_MAXFRAME];
 	int i, nframes;
+#endif /* __rtems__ */
 	const char *logsuffix = ".";
+#ifndef __rtems__
 	const char *fname;
 	isc_result_t result;
 
 	result = isc_backtrace_gettrace(tracebuf, BACKTRACE_MAXFRAME, &nframes);
 		if (result == ISC_R_SUCCESS && nframes > 0)
 			logsuffix = ", back trace";
+#endif /* __rtems__ */
 
 	fprintf(stderr, "%s:%d: %s(%s) %s%s\n",
 		file, line, isc_assertion_typetotext(type), cond,
 		isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
 			       ISC_MSG_FAILED, "failed"), logsuffix);
+#ifndef __rtems__
 	if (result == ISC_R_SUCCESS) {
 		for (i = 0; i < nframes; i++) {
 			unsigned long offset;
@@ -137,5 +142,6 @@ default_callback(const char *file, int line, isc_assertiontype_t type,
 			}
 		}
 	}
+#endif /* __rtems__ */
 	fflush(stderr);
 }

@@ -56,12 +56,16 @@ pipe_socketpair(
 	rc = -1;
 #endif
 
+#ifndef __rtems__
 	if (-1 == rc) {
 		rc = pipe(&fds[0]);
 		called_pipe = TRUE;
 	} else {
 		called_pipe = FALSE;
 	}
+#else /* __rtems__ */
+	called_pipe = FALSE;
+#endif /* __rtems__ */
 
 	if (-1 == rc)
 		return rc;

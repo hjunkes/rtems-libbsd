@@ -646,6 +646,7 @@ block_thread_signals(
 	sigset_t *	pmask
 	)
 {
+#ifndef __rtems__
 	sigset_t	block;
 
 	sigemptyset(&block);
@@ -677,6 +678,7 @@ block_thread_signals(
 # endif
 	sigemptyset(pmask);
 	pthread_sigmask(SIG_BLOCK, &block, pmask);
+#endif /* __rtems__ */
 }
 #endif	/* !SYS_WINNT */
 

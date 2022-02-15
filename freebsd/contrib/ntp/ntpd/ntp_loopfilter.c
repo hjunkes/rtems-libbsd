@@ -181,6 +181,10 @@ static double sys_mindly;	/* huff-n'-puff filter min delay */
 /* Emacs cc-mode goes nuts if we split the next line... */
 #define MOD_BITS (MOD_OFFSET | MOD_MAXERROR | MOD_ESTERROR | \
     MOD_STATUS | MOD_TIMECONST)
+#ifdef __rtems__
+/* ntp_adjtime() is supposed to work on RTEMS */
+#undef SIGSYS
+#endif /* __rtems__ */
 #ifdef SIGSYS
 static void pll_trap (int);	/* configuration trap */
 static struct sigaction sigsys;	/* current sigaction status */
@@ -642,7 +646,9 @@ local_clock(
 			    fp_offset);
 			report_event(EVNT_CLOCKRESET, NULL, tbuf);
 			step_systime(fp_offset);
+#ifndef __rtems__
 			reinit_timer();
+#endif /* __rtems__ */
 			tc_counter = 0;
 			clock_jitter = LOGTOD(sys_precision);
 			rval = 2;

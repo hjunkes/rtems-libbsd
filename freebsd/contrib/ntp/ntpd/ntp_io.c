@@ -3628,7 +3628,7 @@ io_handler(void)
 	 */
 	++handler_calls;
 	rdfdes = activefds;
-#   if !defined(VMS) && !defined(SYS_VXWORKS)
+#   if !defined(VMS) && !defined(SYS_VXWORKS) && !defined(__rtems__)
 	nfound = select(maxactivefd + 1, &rdfdes, NULL,
 			NULL, NULL);
 #   else	/* VMS, VxWorks */
@@ -3640,6 +3640,7 @@ io_handler(void)
 		nfound = select(maxactivefd + 1,
 				&rdfdes, NULL, NULL,
 				&t1);
+		alarm_flag = nfound <= 0;
 	}
 #   endif	/* VMS, VxWorks */
 	if (nfound < 0 && sanitize_fdset(errno)) {
