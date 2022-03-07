@@ -228,6 +228,7 @@ class rtems(builder.Module):
                 'sys/dev/dw_mmc/dw_mmc.c',
                 'sys/dev/ffec/if_ffec_mcf548x.c',
                 'sys/dev/ffec/if_ffec_mpc8xx.c',
+                'sys/dev/mve/mv643xx_nexus.c',
                 'sys/dev/input/touchscreen/tsc_lpc32xx.c',
                 'sys/dev/mmc/st-sdmmc.c',
                 'sys/dev/mmc/st-sdmmc-config.c',
@@ -5289,6 +5290,7 @@ class dpaa(builder.Module):
                 'sys/powerpc/linux_compat.c',
                 'sys/powerpc/drivers/net/ethernet/freescale/dpaa/if_fmanmac.c',
                 'sys/powerpc/drivers/net/ethernet/freescale/sdk_dpaa/if_ml.c',
+		'sys/powerpc/drivers/net/if_mve/mv643xx_eth.c',
             ],
             mm.generator['source']()
         )
